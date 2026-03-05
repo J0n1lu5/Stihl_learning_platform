@@ -1,0 +1,86 @@
+<main class="shell">
+  <section class="card">
+    <p class="eyebrow">Interaktive Lernapp</p>
+    <h1>{{ title }}</h1>
+
+    <div class="status-row">
+      @if (health()) {
+        <p class="chip ok">API online: {{ health()?.service }}</p>
+      } @else if (healthError()) {
+        <p class="chip error">{{ healthError() }}</p>
+      } @else {
+        <p class="chip">API-Status wird geladen...</p>
+      }
+
+      @if (progress(); as progressData) {
+        <p class="chip">
+          Fortschritt: Versuche {{ progressData.attempts }} | Bestwert {{ progressData.bestScorePercent }}%
+        </p>
+      }
+    </div>
+
+    @if (moduleLoading()) {
+      <p class="state">Lernmodul wird geladen...</p>
+    } @else if (moduleError()) {
+      <p class="state error">{{ moduleError() }}</p>
+    } @else if (learningModule(); as moduleData) {
+      <section class="module-header">
+        <h2>{{ moduleData.title }}</h2>
+        <p>{{ moduleData.description }}</p>
+      </section>
+
+      <section class="questions">
+        @for (question of moduleData.questions; track question.id; let idx = $index) {
+          <article class="question-block">
+            <h3>{{ idx + 1 }}. {{ question.prompt }}</h3>
+
+            <div class="options">
+              @for (option of question.options; track option.id) {
+                <button
+                  type="button"
+                  class="option"
+                  [class.selected]="isSelected(question.id, option.id)"
+                  (click)="selectAnswer(question.id, option.id)"
+                >
+                  {{ option.text }}
+                </button>
+              }
+            </div>
+
+            @if (questionResult(question.id); as resultData) {
+              <p class="feedback" [class.good]="resultData.isCorrect" [class.bad]="!resultData.isCorrect">
+                {{ resultData.isCorrect ? 'Richtig' : 'Nicht richtig' }}: {{ resultData.explanation }}
+              </p>
+            }
+          </article>
+        }
+      </section>
+
+      <div class="actions">
+        <button
+          type="button"
+          class="primary"
+          [disabled]="!allQuestionsAnswered() || submitLoading()"
+          (click)="submitQuiz()"
+        >
+          {{ submitLoading() ? 'Wird gesendet...' : 'Quiz abschicken' }}
+        </button>
+
+        <button type="button" class="secondary" (click)="resetQuiz()">Zuruecksetzen</button>
+      </div>
+
+      @if (submitError()) {
+        <p class="state error">{{ submitError() }}</p>
+      }
+
+      @if (submissionResult(); as result) {
+        <div class="result-box" [class.pass]="result.passed" [class.fail]="!result.passed">
+          <h3>Ergebnis</h3>
+          <p>Punkte: {{ result.correctAnswers }} / {{ result.totalQuestions }}</p>
+          <p>Score: {{ result.scorePercent }}%</p>
+          <p>Status: {{ result.passed ? 'Bestanden' : 'Noch nicht bestanden' }}</p>
+        </div>
+      }
+    }
+  </section>
+</main>
